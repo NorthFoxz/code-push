@@ -25,7 +25,21 @@ var PRIVATE_KEY_PATH: string;
 
 interface CodeSigningClaims {
     version: string;
+    // deploymentKey: string;
+    // appStoreVersion: string;
     contentHash: string;
+}
+
+interface SignedMetadata extends CodeSigningClaims {
+    signature: string;
+}
+
+// Hashing algorithm:
+// 1. Recursively generate a sorted array of format <relativeFilePath>: <sha256FileHash>
+// 2. JSON stringify the array
+// 2. SHA256-hash the result
+function hashFolder(folderPath: string): string {
+    return "";
 }
 
 function sign(params: ReleaseHookParams): q.Promise<void> {
