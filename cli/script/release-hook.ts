@@ -1,14 +1,11 @@
 import * as crypto from "crypto";
 import * as fs from "fs";
-var hashFiles = require("hash-files");
-var nodeRsa = require("node-rsa");
 import * as jwt from "jsonwebtoken";
 import * as path from "path";
 import * as q from "q";
+import * as hashUtils from "./hash-utils";
 
-import * as packageDiffingUtils from "./package-diffing";
-
-interface ReleaseHookParams {
+export interface ReleaseHookParams {
     appName: string;
     deploymentName: string;
     appStoreVersion: string;
@@ -34,24 +31,13 @@ interface SignedMetadata extends CodeSigningClaims {
     signature: string;
 }
 
-// Hashing algorithm:
-// 1. Recursively generate a sorted array of format <relativeFilePath>: <sha256FileHash>
-// 2. JSON stringify the array
-// 2. SHA256-hash the result
-function hashFolder(folderPath: string): string {
-    return "";
-}
-
 function sign(params: ReleaseHookParams): q.Promise<void> {
     // If signature file already exists, throw error
     if (!fs.lstatSync(params.filePath).isDirectory()) {
         // TODO: Make it a directory
     }
 
-    return q.nfcall<string>(hashFiles, {
-        algorithm: HASH_ALGORITHM,
-        files: [ path.join(params.filePath, "**") ]
-    })
+    return hashUtils.generatePackageHash(params.filePath)
         .then((hash: string) => {
             var claims: CodeSigningClaims = {
                 version: CURRENT_SIGNATURE_VERSION,

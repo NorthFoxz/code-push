@@ -1,4 +1,4 @@
-
+/*
 File hashing on RN Android
 File hashing on RN iOS
 File hashing on Cordova Android
@@ -8,3 +8,4 @@ Claims verification on Cordova
 Claims generation on CLI
 Investigate certificates management (optional)
 Buddy testing
+*/

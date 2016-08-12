@@ -31,9 +31,10 @@
     "code-push": "1.10.0-beta",
     "email-validator": "^1.0.3",
     "gradle-to-js": "0.1.0",
-    "hash-files": "^1.1.1",
+    "hasha": "^2.2.0",
     "jsonwebtoken": "^7.0.0",
     "moment": "^2.10.6",
+    "node-dir": "^0.1.15",
     "node-rsa": "^0.3.2",
     "opener": "^1.4.1",
     "parse-duration": "0.1.1",
@@ -47,11 +48,13 @@
     "semver": "4.3.6",
     "simctl": "0.0.9",
     "slash": "1.0.0",
+    "try-json": "^1.0.0",
     "update-notifier": "^0.5.0",
     "which": "^1.2.7",
     "wordwrap": "1.0.0",
     "xml2js": "^0.4.16",
     "yargs": "^3.15.0",
+    "yauzl": "^2.6.0",
     "yazl": "2.2.2"
   }
 }
