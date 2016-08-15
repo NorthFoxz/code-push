@@ -9,7 +9,8 @@ export interface ReleaseHookParams {
     appName: string;
     deploymentName: string;
     appStoreVersion: string;
-    filePath: string;
+    fileOrDirectoryPath: string;
+    basePath: string;
 }
 
 export function execute(params: ReleaseHookParams): q.Promise<void> {
@@ -33,11 +34,11 @@ interface SignedMetadata extends CodeSigningClaims {
 
 function sign(params: ReleaseHookParams): q.Promise<void> {
     // If signature file already exists, throw error
-    if (!fs.lstatSync(params.filePath).isDirectory()) {
+    if (!fs.lstatSync(params.fileOrDirectoryPath).isDirectory()) {
         // TODO: Make it a directory
     }
 
-    return hashUtils.generatePackageHash(params.filePath)
+    return hashUtils.generatePackageHash(params.fileOrDirectoryPath, params.basePath)
         .then((hash: string) => {
             var claims: CodeSigningClaims = {
                 version: CURRENT_SIGNATURE_VERSION,

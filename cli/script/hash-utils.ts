@@ -1,9 +1,10 @@
-/// <reference path="./yauzl.d.ts" />
+/// <reference directoryPath="./yauzl.d.ts" />
 
 import * as crypto from "crypto";
-var dir = require("node-dir");
 import * as fs from "fs";
+import * as path from "path";
 import q = require("q");
+import * as recursiveFs from "recursive-fs";
 import * as stream from "stream";
 var tryJSON = require("try-json");
 import * as yauzl from "yauzl";
@@ -11,7 +12,7 @@ import * as yauzl from "yauzl";
 import Promise = q.Promise;
 const HASH_ALGORITHM = "sha256";
 
-export function generatePackageHash(directoryPath: string): Promise<string> {
+export function generatePackageHash(directoryPath: string, basePath: string): Promise<string> {
     if (!fs.lstatSync(directoryPath).isDirectory()) {
         throw new Error("Not a directory. Please either create a directory, or use hashFile().");
     }
@@ -86,30 +87,39 @@ export function generatePackageManifestFromZip(filePath: string): Promise<Packag
         .finally(() => zipFile && zipFile.close());
 }
 
-export function generatePackageManifestFromDirectory(path: string): Promise<PackageManifest> {
+export function generatePackageManifestFromDirectory(directoryPath: string, basePath: string): Promise<PackageManifest> {
     var deferred: q.Deferred<PackageManifest> = q.defer<PackageManifest>();
     var fileHashesMap: Map<string, string> = new Map<string, string>();
 
-    dir.readFilesStream(
-        path,
-        { doneOnErr: true },
-        (err: Error, stream: stream.Readable, fileName: string, next: () => void) => {
-            if (err) return;
-
-            hashStream(stream)
-                .then((hash: string) => {
-                    fileHashesMap.set(fileName, hash);
-                    next();
-                }, deferred.reject);
-        },
-        (err: Error, files: string[]) => {
-            if (err) {
-                deferred.reject(err);
-            } else {
-                deferred.resolve(new PackageManifest(fileHashesMap));
-            }
+    recursiveFs.readdirr(directoryPath, (error?: any, directories?: string[], files?: string[]): void => {
+        if (error) {
+            deferred.reject(error);
+            return;
         }
-    )
+
+        if (!files || files.length === 0) {
+            deferred.reject("Error: Can't sign the release because no files were found.");
+            return;
+        }
+
+        // Hash the files sequentially, because streaming them in parallel is not necessarily faster
+        var generateManifestPromise: Promise<void> = files.reduce((soFar: Promise<void>, filePath: string) => {
+            return soFar
+                .then(() => {
+                    return hashFile(filePath);
+                })
+                .then((hash: string) => {
+                    var relativePath: string = path.relative(basePath, filePath);
+                    fileHashesMap.set(relativePath, hash);
+                });
+        }, Q(<void>null));
+
+        generateManifestPromise
+            .then(() => {
+                deferred.resolve(new PackageManifest(fileHashesMap));
+            }, deferred.reject)
+            .done();
+    });
 
     return deferred.promise;
 }

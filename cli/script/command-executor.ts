@@ -1108,6 +1108,7 @@ export var release = (command: cli.IReleaseCommand): Promise<void> => {
         isSingleFilePackage = false;
         getPackageFilePromise = Promise<IPackageFile>((resolve: (file: IPackageFile) => void, reject: (reason: Error) => void): void => {
             var directoryPath: string = filePath;
+            var baseDirectoryPath = path.dirname(directoryPath);
 
             recursiveFs.readdirr(directoryPath, (error?: any, directories?: string[], files?: string[]): void => {
                 if (error) {
@@ -1115,7 +1116,6 @@ export var release = (command: cli.IReleaseCommand): Promise<void> => {
                     return;
                 }
 
-                var baseDirectoryPath = path.dirname(directoryPath);
                 var fileName: string = generateRandomFilename(15) + ".zip";
                 var zipFile = new yazl.ZipFile();
                 var writeStream: fs.WriteStream = fs.createWriteStream(fileName);

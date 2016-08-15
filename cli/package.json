@@ -34,7 +34,6 @@
     "hasha": "^2.2.0",
     "jsonwebtoken": "^7.0.0",
     "moment": "^2.10.6",
-    "node-dir": "^0.1.15",
     "node-rsa": "^0.3.2",
     "opener": "^1.4.1",
     "parse-duration": "0.1.1",
