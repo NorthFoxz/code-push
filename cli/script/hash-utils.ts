@@ -1,4 +1,4 @@
-/// <reference directoryPath="./yauzl.d.ts" />
+/// <reference path="./yauzl.d.ts" />
 
 import * as crypto from "crypto";
 import * as fs from "fs";
@@ -17,7 +17,10 @@ export function generatePackageHash(directoryPath: string, basePath: string): Pr
         throw new Error("Not a directory. Please either create a directory, or use hashFile().");
     }
 
-    return q("");
+    return generatePackageManifestFromDirectory(directoryPath, basePath)
+        .then((manifest: PackageManifest) => {
+            return manifest.computePackageHash()
+        });
 }
 
 export function generatePackageManifestFromZip(filePath: string): Promise<PackageManifest> {
@@ -55,7 +58,7 @@ export function generatePackageManifestFromZip(filePath: string): Promise<Packag
                 reject(error);
             })
             .on("entry", (entry: yauzl.IEntry): void => {
-                if (PackageManifest.isIgnored(entry)) {
+                if (PackageManifest.isIgnored(entry.fileName)) {
                     zipFile.readEntry();
                     return;
                 }
@@ -104,15 +107,17 @@ export function generatePackageManifestFromDirectory(directoryPath: string, base
 
         // Hash the files sequentially, because streaming them in parallel is not necessarily faster
         var generateManifestPromise: Promise<void> = files.reduce((soFar: Promise<void>, filePath: string) => {
+            var relativePath: string = path.relative(basePath, filePath);
             return soFar
                 .then(() => {
-                    return hashFile(filePath);
-                })
-                .then((hash: string) => {
-                    var relativePath: string = path.relative(basePath, filePath);
-                    fileHashesMap.set(relativePath, hash);
+                    if (!PackageManifest.isIgnored(relativePath)) {
+                        return hashFile(filePath)
+                            .then((hash: string) => {
+                                fileHashesMap.set(relativePath, hash);
+                            });
+                    }
                 });
-        }, Q(<void>null));
+        }, q(<void>null));
 
         generateManifestPromise
             .then(() => {
@@ -212,12 +217,13 @@ export class PackageManifest {
         return new PackageManifest(map);
     }
 
-    public static isIgnored(entry: yauzl.IEntry): boolean {
+    public static isIgnored(relativeFilePath: string): boolean {
         const __MACOSX = "__MACOSX/";
         const DS_STORE = ".DS_Store";
 
-        return startsWith(entry.fileName, __MACOSX)
-            || (isFile(entry) && (entry.fileName === DS_STORE || endsWith(entry.fileName, "/" + DS_STORE)));
+        return startsWith(relativeFilePath, __MACOSX)
+            || relativeFilePath === DS_STORE
+            || endsWith(relativeFilePath, "/" + DS_STORE);
     }
 }
 

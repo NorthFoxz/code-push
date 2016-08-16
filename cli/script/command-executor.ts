@@ -1175,7 +1175,7 @@ export var release = (command: cli.IReleaseCommand): Promise<void> => {
                 })
                 .finally((): void => {
                     if (file.isTemporary) {
-                        fs.unlinkSync(filePath);
+                        // fs.unlinkSync(filePath);
                     }
                 });
         });
