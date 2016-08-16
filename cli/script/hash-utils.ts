@@ -1,5 +1,6 @@
 /**
- * NOTE!!! This file is duplicated between the CodePush service and CLI, please keep them in sync.
+ * NOTE!!! This utility file is duplicated for use by the CodePush service (for server-driven hashing/
+ * integrity checks) and CLI (for end-to-end code signing), please keep them in sync.
  */
 
 import * as crypto from "crypto";
@@ -8,8 +9,10 @@ import * as path from "path";
 import * as q from "q";
 import * as stream from "stream";
 
-// Do not throw an exception if either of these modules are missing,
-// as they may not be needed by the consumer of this file
+// Do not throw an exception if either of these modules are missing, as they may not be needed by the
+// consumer of this file.
+// - recursiveFs: Only required for hashing of directories
+// - yauzl: Only required for in-memory hashing of zip files
 try { var recursiveFs = require("recursive-fs"); } catch (e) {}
 try { var yauzl = require("yauzl"); } catch (e) {}
 
