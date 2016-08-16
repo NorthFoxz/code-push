@@ -1,13 +1,17 @@
-/// <reference path="./yauzl.d.ts" />
+/**
+ * NOTE!!! This file is duplicated between the CodePush service and CLI, please keep them in sync.
+ */
 
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
-import q = require("q");
-import * as recursiveFs from "recursive-fs";
+import * as q from "q";
 import * as stream from "stream";
-var tryJSON = require("try-json");
-import * as yauzl from "yauzl";
+
+// Do not throw an exception if either of these modules are missing,
+// as they may not be needed by the consumer of this file
+try { var recursiveFs = require("recursive-fs"); } catch (e) {}
+try { var yauzl = require("yauzl"); } catch (e) {}
 
 import Promise = q.Promise;
 const HASH_ALGORITHM = "sha256";
@@ -37,9 +41,9 @@ export function generatePackageManifestFromZip(filePath: string): Promise<Packag
         }
     }
 
-    var zipFile: yauzl.ZipFile;
+    var zipFile: any;
 
-    yauzl.open(filePath, { lazyEntries: true }, (error?: any, openedZipFile?: yauzl.ZipFile): void => {
+    yauzl.open(filePath, { lazyEntries: true }, (error?: any, openedZipFile?: any): void => {
         if (error) {
             // This is the first time we try to read the package as a .zip file;
             // however, it may not be a .zip file.  Handle this gracefully.
@@ -57,7 +61,7 @@ export function generatePackageManifestFromZip(filePath: string): Promise<Packag
             .on("error", (error: any): void => {
                 reject(error);
             })
-            .on("entry", (entry: yauzl.IEntry): void => {
+            .on("entry", (entry: any): void => {
                 if (PackageManifest.isIgnored(entry.fileName)) {
                     zipFile.readEntry();
                     return;
@@ -203,7 +207,7 @@ export class PackageManifest {
     }
 
     public static deserialize(serializedContents: string): PackageManifest {
-        var obj: any = tryJSON(serializedContents);
+        var obj: any = JSON.parse(serializedContents);
         var map: Map<string, string>;
 
         if (obj) {
@@ -225,13 +229,6 @@ export class PackageManifest {
             || relativeFilePath === DS_STORE
             || endsWith(relativeFilePath, "/" + DS_STORE);
     }
-}
-
-function isFile(entry: yauzl.IEntry): boolean {
-    const S_IFMT = 0xF000;
-    const S_IFREG = 0x8000;
-
-    return ((entry.externalFileAttributes >>> 16) & S_IFMT) === S_IFREG;
 }
 
 function startsWith(str: string, prefix: string): boolean {
